@@ -6,12 +6,14 @@
  * nem guarda hash de senha — apenas o token de sessão, que expira sozinho.
  *
  * Perfis e o que cada um pode fazer:
- *   admin_master — tudo: cadastrar OCI, ver termo, gerenciar QUALQUER usuário
- *                  (inclusive outros admins), ver o LOG de auditoria.
- *   admin        — cadastrar OCI, ver termo, criar/desativar apenas
- *                  user1/user2 (nunca admin ou admin_master).
- *   user1        — apenas cadastrar OCI.
- *   user2        — apenas navegação básica do site (sem OCI, sem termo).
+ *   admin_master — tudo: cadastrar/editar OCI, editar/concluir termo,
+ *                  gerenciar QUALQUER usuário (inclusive outros admins),
+ *                  ver o LOG de auditoria.
+ *   admin        — cadastrar/editar OCI, editar/concluir termo,
+ *                  criar/desativar apenas user1/user2 (nunca admin ou
+ *                  admin_master).
+ *   user1        — cadastrar e listar/filtrar OCI (sem editar, sem termo).
+ *   user2        — apenas listar/filtrar OCI (sem cadastrar, sem termo).
  */
 
 var SESSAO_HORAS = 8;
