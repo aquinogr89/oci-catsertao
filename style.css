@@ -35,15 +35,20 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
 #map{ position:absolute; inset:0; width:100%; height:100%; background:#e5e0d5; }
 
 /* Botões flutuantes "Cadastrar OCI" + "Listar OCI" */
+/* pointer-events:none na linha (reativado nos botões) -- no mobile essa div
+   fica com width:calc(100% - 24px) (ver media query abaixo) pra caber os
+   botões empilhados, bem mais larga que o conteúdo visível; sem isso, o
+   espaço vazio ao redor dos botões tapava o toque no botão "voltar ao site
+   principal" (canto inferior esquerdo), que fica embaixo dela no DOM. */
 .fab-row{
   position:absolute; left:50%; bottom:18px; transform:translateX(-50%); z-index:900;
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:center; gap:10px; pointer-events:none;
 }
 .btn-fab{
   font-family:'Oswald', sans-serif; font-weight:600; font-size:14px; letter-spacing:.05em;
   text-transform:uppercase; color:#fff; background:var(--red); border:none;
   padding:14px 26px; border-radius:999px; cursor:pointer; box-shadow:0 10px 26px -10px rgba(0,0,0,.5);
-  display:flex; align-items:center; gap:8px; white-space:nowrap;
+  display:flex; align-items:center; gap:8px; white-space:nowrap; pointer-events:auto;
 }
 .btn-fab:hover{ background:var(--red-hover); }
 .btn-fab:active{ transform:scale(.97); }
