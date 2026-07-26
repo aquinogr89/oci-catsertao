@@ -41,7 +41,11 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
    espaço vazio ao redor dos botões tapava o toque no botão "voltar ao site
    principal" (canto inferior esquerdo), que fica embaixo dela no DOM. */
 .fab-row{
-  position:absolute; left:50%; bottom:18px; transform:translateX(-50%); z-index:900;
+  /* z-index:1001 -- acima dos controles nativos do Leaflet (.leaflet-top/
+     .leaflet-bottom usam z-index:1000), senao em telas estreitas a faixa
+     de botoes fica atras do controle de atribuicao/zoom do mapa e o toque
+     nao chega nos botoes "Listar OCI"/"Cadastrar OCI". */
+  position:absolute; left:50%; bottom:18px; transform:translateX(-50%); z-index:1001;
   display:flex; align-items:center; gap:10px; pointer-events:none;
 }
 .btn-fab{
@@ -57,7 +61,7 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
 
 /* Botão "Atualizar localização" (canto) */
 .btn-locate{
-  position:absolute; right:12px; bottom:18px; z-index:900; width:44px; height:44px;
+  position:absolute; right:12px; bottom:18px; z-index:1001; width:44px; height:44px;
   background:#fff; border:1px solid var(--border-2); border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -10px rgba(0,0,0,.4);
   font-size:18px; color:var(--navy);
@@ -66,7 +70,7 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
 
 /* Botão "Voltar ao site principal" (canto oposto ao de localização) */
 .btn-back-main{
-  position:absolute; left:12px; bottom:18px; z-index:900; width:44px; height:44px;
+  position:absolute; left:12px; bottom:18px; z-index:1001; width:44px; height:44px;
   background:#fff; border:1px solid var(--border-2); border-radius:50%; cursor:pointer;
   display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px -10px rgba(0,0,0,.4);
   font-size:18px; color:var(--navy); text-decoration:none;
