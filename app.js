@@ -843,24 +843,27 @@ function abrirModalEdicaoPorId(id) {
 }
 function abrirModalEdicao(id) { abrirModalEdicaoPorId(id); }
 
-// ===================== Botão "Listar OCI" (abre listar.html em nova aba) =====================
+// ===================== Botão "Listar OCI" (abre listar.html numa aba própria) =====================
 // A listagem com filtro/distância vive em listar.html, página separada — ela
 // lê a mesma sessão do localStorage (mesma origem aquinogr89.github.io), então
 // não precisa repassar token nenhum pela URL. Aqui só garante que o usuário
 // já está logado (com o mesmo popup de login das outras ações) antes de abrir
-// a nova aba, pra ela já carregar com sessão pronta.
+// a aba, pra ela já carregar com sessão pronta.
+// Nome de aba fixo (em vez de "_blank"): cliques repetidos reaproveitam a
+// mesma aba (só troca de foco) em vez de abrir uma nova a cada clique.
+var LISTAR_OCI_TAB_NAME = 'oci-listar-tab';
 function wireBotaoListar() {
   document.getElementById('btn-listar').addEventListener('click', function () {
     const session = getSession();
     if (!session) {
-      abrirPopupLogin(function () { window.open('listar.html', '_blank'); });
+      abrirPopupLogin(function () { window.open('listar.html', LISTAR_OCI_TAB_NAME); });
       return;
     }
     if (!podeVisualizarLista(session)) {
       window.location.href = CATSERTAO_URL;
       return;
     }
-    window.open('listar.html', '_blank');
+    window.open('listar.html', LISTAR_OCI_TAB_NAME);
   });
 }
 

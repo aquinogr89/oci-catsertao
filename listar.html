@@ -26,7 +26,7 @@
 </header>
 
 <main class="listar-main">
-  <a class="listar-back" href="index.html">← Voltar ao mapa</a>
+  <a class="listar-back" href="index.html" id="link-voltar-mapa">← Voltar ao mapa</a>
 
   <p id="carregando-msg" class="q-hint">Verificando sessão...</p>
 
@@ -125,6 +125,23 @@
   var elFiltroEndereco = document.getElementById('filtro-endereco');
   var elFiltroNome = document.getElementById('filtro-nome');
   var elFiltroRegularidade = document.getElementById('filtro-regularidade');
+
+  // listar.html sempre abre numa aba própria (window.open com nome fixo, ver
+  // wireBotaoListar em app.js), então "window.opener" aponta pra aba do mapa
+  // que abriu ela. Navegar o opener e fechar esta aba evita ficar acumulando
+  // abas "Mapa de OCI" a cada ida e volta. Se não houver opener (ex.: usuário
+  // abriu listar.html direto pela URL), cai no comportamento normal de navegar
+  // a própria aba.
+  function irParaMapa(url) {
+    if (window.opener && !window.opener.closed) {
+      window.opener.location.href = url;
+      window.opener.focus();
+      window.close();
+      setTimeout(function () { window.location.href = url; }, 300);
+    } else {
+      window.location.href = url;
+    }
+  }
 
   function distanciaMetros(lat1, lng1, lat2, lng2) {
     var R = 6371000; // raio médio da Terra, em metros
@@ -243,7 +260,7 @@
     if (mostrarEditar) {
       elTabela.querySelectorAll('.btn-editar').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          window.location.href = 'index.html?editar=' + encodeURIComponent(btn.dataset.id);
+          irParaMapa('index.html?editar=' + encodeURIComponent(btn.dataset.id));
         });
       });
       elTabela.querySelectorAll('.btn-excluir').forEach(function (btn) {
@@ -346,6 +363,10 @@
   elFiltroRegularidade.addEventListener('change', function () { limiteAtual = LIMITE_INICIAL; renderizar(); });
   document.getElementById('btn-atualizar-loc').addEventListener('click', obterLocalizacao);
   elBtnExportar.addEventListener('click', exportarExcel);
+  document.getElementById('link-voltar-mapa').addEventListener('click', function (e) {
+    e.preventDefault();
+    irParaMapa('index.html');
+  });
 
   function mostrarNegado(mensagem) {
     hide(elCarregando);
