@@ -703,9 +703,36 @@ function wireCadastroModal() {
     editingId = null;
   }
 
+  // Se o card já tem algo digitado, fechar (X ou toque no fundo escuro fora
+  // do card) pede confirmação antes de descartar — evita perder o
+  // preenchimento por um toque acidental (ex.: teclado do celular abrindo/
+  // fechando e deslocando a tela enquanto o usuário ainda está digitando).
+  function formTemDadosPreenchidos() {
+    return !!(
+      document.getElementById('input-nome').value.trim() ||
+      document.getElementById('input-capacidade').value ||
+      inputRua.value.trim() || inputNumero.value.trim() || inputBairro.value.trim() || inputCidade.value.trim() ||
+      document.getElementById('input-pavimentos').value ||
+      document.getElementById('input-area').value ||
+      document.getElementById('input-altura').value ||
+      document.getElementById('check-fachada').checked ||
+      document.getElementById('check-recalque').checked ||
+      document.getElementById('check-publico').checked ||
+      document.getElementById('check-caldeira').checked ||
+      checkAvcb.checked
+    );
+  }
+
+  function fecharComConfirmacao() {
+    if (formTemDadosPreenchidos() && !window.confirm('Fechar sem salvar? Os dados preenchidos neste cadastro serão perdidos.')) {
+      return;
+    }
+    closeModal();
+  }
+
   document.getElementById('btn-cadastrar').addEventListener('click', function () { openModal(null); });
-  document.getElementById('modal-close').addEventListener('click', closeModal);
-  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  document.getElementById('modal-close').addEventListener('click', fecharComConfirmacao);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) fecharComConfirmacao(); });
   document.getElementById('btn-atualizar-loc').addEventListener('click', captureGps);
 
   window.abrirModalEdicaoComPonto = openModal;
