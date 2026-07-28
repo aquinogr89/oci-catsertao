@@ -178,7 +178,7 @@
 
     var thead = '<thead><tr>' +
       '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Hidrantes</th><th>AVCB</th><th>Cadastrado por</th>' +
-      (mostrarEditar ? '<th></th>' : '') +
+      (mostrarEditar ? '<th></th><th></th>' : '') +
       '</tr></thead>';
 
     var tbody = '<tbody>' + visiveis.map(function (p) {
@@ -190,6 +190,7 @@
         '<td>' + escapeHtml(getAvcbStatus(p).label) + '</td>' +
         '<td class="td-cadastrado" title="' + escapeHtml(p.cadastrado_por || '—') + '">' + escapeHtml(p.cadastrado_por || '—') + '</td>' +
         (mostrarEditar ? '<td><button type="button" class="btn-outline-navy btn-sm btn-editar" data-id="' + escapeHtml(p.id) + '">Editar</button></td>' : '') +
+        (mostrarEditar ? '<td><button type="button" class="btn-outline-navy btn-sm btn-excluir" data-id="' + escapeHtml(p.id) + '" data-nome="' + escapeHtml(p.nome) + '">Excluir</button></td>' : '') +
         '</tr>';
     }).join('') + '</tbody>';
 
@@ -202,6 +203,9 @@
           window.location.href = 'index.html?editar=' + encodeURIComponent(btn.dataset.id);
         });
       });
+      elTabela.querySelectorAll('.btn-excluir').forEach(function (btn) {
+        btn.addEventListener('click', function () { excluirOci(btn.dataset.id, btn.dataset.nome); });
+      });
     }
 
     if (pontos.length > limiteAtual) {
@@ -212,6 +216,19 @@
     } else {
       hide(elBtnMais);
     }
+  }
+
+  function excluirOci(id, nome) {
+    var session = getSession();
+    if (!session || !podeEditar(session)) return;
+    if (!window.confirm('Excluir "' + nome + '"? Essa ação não pode ser desfeita.')) return;
+
+    excluirPoint(id, session.token).then(function () {
+      todosOsPontos = todosOsPontos.filter(function (p) { return p.id !== id; });
+      renderizar();
+    }).catch(function (err) {
+      window.alert((err && err.message) || 'Não foi possível excluir agora.');
+    });
   }
 
   function renderizar() {

@@ -371,6 +371,15 @@ function updateLocalPoint(id, novosDados) {
   return Promise.resolve(points[idx]);
 }
 
+function deleteLocalPoint(id) {
+  const points = getLocalPoints();
+  const idx = points.findIndex(function (p) { return p.id === id; });
+  if (idx === -1) return Promise.reject(new Error('OCI não encontrado.'));
+  points.splice(idx, 1);
+  setLocalPoints(points);
+  return Promise.resolve({ ok: true });
+}
+
 let markersById = {};
 
 function loadPoints() {
@@ -423,6 +432,20 @@ function editPoint(id, record, token) {
     });
   }
   return updateLocalPoint(id, record);
+}
+
+function excluirPoint(id, token) {
+  if (SHEETS_API_URL) {
+    return fetch(SHEETS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'excluirRTI', token: token, id: id })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (!res.ok) return Promise.reject(new Error(res.error || 'Falha ao excluir.'));
+      return res;
+    });
+  }
+  return deleteLocalPoint(id);
 }
 
 function listarRTIsRemoto(token) {

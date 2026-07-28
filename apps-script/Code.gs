@@ -135,6 +135,7 @@ function doPost(e) {
     case 'cadastrarRTI': return jsonResponse_(handleCadastrarRTI_(body));
     case 'listarRTIs': return jsonResponse_(handleListarRTIs_(body));
     case 'editarRTI': return jsonResponse_(handleEditarRTI_(body));
+    case 'excluirRTI': return jsonResponse_(handleExcluirRTI_(body));
     default: return jsonResponse_({ ok: false, error: 'Ação inválida.' });
   }
 }
@@ -348,5 +349,26 @@ function handleEditarRTI_(body) {
   rtiSheet_().getRange(achado.linha, 1, 1, achado.headers.length).setValues([novaLinha]);
 
   registrarLog_(sessao.login, sessao.perfil, 'edicao_rti', 'editou "' + d.nome + '" (id ' + id + ')');
+  return { ok: true };
+}
+
+// Exclusão definitiva, mesma restrição de perfil da edição (admin_master/
+// admin — o vistoriador só cadastra). Fica registrada no LOG antes de apagar
+// a linha, guardando nome/endereço para o rastro não desaparecer junto com
+// a linha excluída.
+function handleExcluirRTI_(body) {
+  var sessao = exigirSessao_(body.token, RTI_PERFIS_EDICAO);
+  if (sessao.erro) return { ok: false, error: sessao.erro };
+
+  var id = String(body.id || '').trim();
+  if (!id) return { ok: false, error: 'RTI não identificado.' };
+
+  var achado = encontrarLinhaRTIPorId_(id);
+  if (!achado) return { ok: false, error: 'RTI não encontrado.' };
+
+  registrarLog_(sessao.login, sessao.perfil, 'exclusao_rti',
+    'excluiu "' + achado.valores.nome + '" (id ' + id + ', cadastrado por ' + achado.valores.cadastrado_por + ')');
+  rtiSheet_().deleteRow(achado.linha);
+
   return { ok: true };
 }

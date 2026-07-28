@@ -30,7 +30,9 @@ CAT-SERTAO-SEM-FUNDO.png  logo usado no cabeçalho/rodapé
 à API, formatação) na mesma página — não duplica lógica, só adiciona seu
 próprio filtro/ordenação por cima dos mesmos pontos retornados pelo backend.
 O botão "Editar" da listagem manda o admin/admin_master de volta para
-`index.html?editar=<id>`, que abre o modal de edição direto nesse OCI.
+`index.html?editar=<id>`, que abre o modal de edição direto nesse OCI. O
+botão "Excluir" (mesma restrição de perfil) apaga a linha na hora, depois de
+confirmação — a ação fica registrada no LOG antes de apagar (`exclusao_rti`).
 
 `Code.gs` e `Auth.gs` vivem no **mesmo projeto** Apps Script (mesma planilha,
 mesma implantação `/exec`) — não são dois backends separados.
