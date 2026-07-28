@@ -35,18 +35,29 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
 #map{ position:absolute; inset:0; width:100%; height:100%; background:#e5e0d5; }
 
 /* Botões flutuantes "Cadastrar OCI" + "Listar OCI" */
-/* pointer-events:none na linha (reativado nos botões) -- no mobile essa div
-   fica com width:calc(100% - 24px) (ver media query abaixo) pra caber os
-   botões empilhados, bem mais larga que o conteúdo visível; sem isso, o
-   espaço vazio ao redor dos botões tapava o toque no botão "voltar ao site
-   principal" (canto inferior esquerdo), que fica embaixo dela no DOM. */
+/* pointer-events:none na linha (reativado nos botões) -- a div fica mais
+   larga que o conteúdo visível (largura total no mobile, coluna sem largura
+   fixa no desktop); sem isso, o espaço vazio ao redor dos botões tapava o
+   toque nos controles do Leaflet e nos botões de canto (locate/voltar). */
+/* Ficam no TOPO do mapa (empilhados na horizontal) no mobile e na LATERAL
+   direita (empilhados na vertical, centralizados) no desktop -- no fundo da
+   tela colidiam com .btn-locate/.btn-back-main (cantos inferiores) e com o
+   controle de atribuição do Leaflet. */
 .fab-row{
   /* z-index:1001 -- acima dos controles nativos do Leaflet (.leaflet-top/
      .leaflet-bottom usam z-index:1000), senao em telas estreitas a faixa
      de botoes fica atras do controle de atribuicao/zoom do mapa e o toque
      nao chega nos botoes "Listar OCI"/"Cadastrar OCI". */
-  position:absolute; left:50%; bottom:18px; transform:translateX(-50%); z-index:1001;
+  position:absolute; z-index:1001;
   display:flex; align-items:center; gap:10px; pointer-events:none;
+  top:14px; left:50%; right:auto; bottom:auto; transform:translateX(-50%);
+  width:calc(100% - 24px); justify-content:center; flex-wrap:wrap;
+}
+@media (min-width: 641px){
+  .fab-row{
+    top:50%; left:auto; right:20px; bottom:auto; transform:translateY(-50%);
+    flex-direction:column; align-items:flex-end; width:auto; flex-wrap:nowrap; justify-content:center;
+  }
 }
 .btn-fab{
   font-family:'Oswald', sans-serif; font-weight:600; font-size:14px; letter-spacing:.05em;
@@ -190,7 +201,6 @@ footer.bottom{ background:var(--navy); color:#c8cde0; flex:0 0 auto; }
 }
 
 @media (max-width: 480px){
-  .fab-row{ bottom:14px; flex-wrap:wrap; justify-content:center; width:calc(100% - 24px); }
   .btn-fab{ font-size:12.5px; padding:11px 16px; }
   .btn-locate{ width:40px; height:40px; bottom:14px; right:10px; }
   .btn-back-main{ width:40px; height:40px; bottom:14px; left:10px; }

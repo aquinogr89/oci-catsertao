@@ -215,15 +215,43 @@ function handleCadastrarRTI_(body) {
   if (d.erro) return { ok: false, error: d.erro };
 
   var id = Utilities.getUuid();
-  rtiSheet_().appendRow([
-    body.timestamp || new Date().toISOString(),
-    d.lat, d.lng, d.nome, d.capacidade,
-    d.hidranteFachada, d.hidranteRecalque, d.endereco,
-    d.possuiAvcb, d.dataValidadeAvcb, d.pavimentos, d.area, d.altura,
-    sessao.login,
-    id, d.rua, d.numero, d.bairro, d.cidade,
-    d.possuiCaldeira, d.hidrantePublico
-  ]);
+  var timestamp = body.timestamp || new Date().toISOString();
+  var sheet = rtiSheet_();
+  // Grava por NOME de coluna (não por posição fixa): em planilhas criadas
+  // antes das colunas possui_avcb/quantidade_pavimentos/area_construida/
+  // altura_edificacao existirem, "cadastrado_por" ficou "presa" numa posição
+  // anterior à dessas colunas (rtiSheet_() só adiciona colunas no fim, nunca
+  // reordena as existentes). Um array fixo por posição gravava valores na
+  // coluna física errada (ex.: SIM/NÃO do AVCB caindo em "cadastrado_por").
+  // Ver mesmo padrão em handleEditarRTI_.
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var novaLinha = headers.map(function (h) {
+    switch (h) {
+      case 'timestamp': return timestamp;
+      case 'lat': return d.lat;
+      case 'lng': return d.lng;
+      case 'nome': return d.nome;
+      case 'capacidade_litros': return d.capacidade;
+      case 'hidrante_fachada': return d.hidranteFachada;
+      case 'hidrante_recalque': return d.hidranteRecalque;
+      case 'hidrante_publico': return d.hidrantePublico;
+      case 'endereco': return d.endereco;
+      case 'possui_avcb': return d.possuiAvcb;
+      case 'data_validade_avcb': return d.dataValidadeAvcb;
+      case 'quantidade_pavimentos': return d.pavimentos;
+      case 'area_construida': return d.area;
+      case 'altura_edificacao': return d.altura;
+      case 'cadastrado_por': return sessao.login;
+      case 'id': return id;
+      case 'rua': return d.rua;
+      case 'numero': return d.numero;
+      case 'bairro': return d.bairro;
+      case 'cidade': return d.cidade;
+      case 'possui_caldeira': return d.possuiCaldeira;
+      default: return '';
+    }
+  });
+  sheet.appendRow(novaLinha);
 
   registrarLog_(sessao.login, sessao.perfil, 'cadastro_rti', d.nome + ' (' + d.capacidade + ' L)');
   return { ok: true, id: id };
