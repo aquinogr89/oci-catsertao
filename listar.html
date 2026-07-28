@@ -53,6 +53,7 @@
       <div class="listar-loc-status">
         <span id="loc-status-texto">📍 Obtendo sua localização para calcular a distância...</span>
         <button id="btn-atualizar-loc" type="button" class="btn-outline-navy" style="margin:0;">Atualizar localização</button>
+        <button id="btn-exportar-excel" type="button" class="btn-outline-navy" style="margin:0 0 0 auto;">⬇️ Exportar Excel</button>
       </div>
     </div>
 
@@ -62,7 +63,7 @@
       <table id="tabela-oci" class="rti-table u-hidden"></table>
     </div>
 
-    <button id="btn-mostrar-mais" type="button" class="btn-outline-navy btn-mostrar-mais u-hidden">Mostrar mais (até 20)</button>
+    <button id="btn-mostrar-mais" type="button" class="btn-outline-navy btn-mostrar-mais u-hidden">Mostrar mais</button>
   </div>
 </main>
 
@@ -75,13 +76,19 @@
   </div>
 </footer>
 
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="app.js"></script>
 <script>
 (function () {
   'use strict';
 
-  var LIMITE_INICIAL = 10;
-  var LIMITE_MAXIMO = 20;
+  var LIMITE_INICIAL = 5;
+  var INCREMENTO_MOSTRAR_MAIS = 10;
+
+  // TODO: preencher com { nome, lat, lng } de cada Seção de Bombeiros (OME)
+  // do CAT Sertão assim que os endereços/coordenadas forem informados.
+  // Enquanto vazio, a coluna "Dist. OME" fica sempre "—".
+  var OMES = [];
 
   var todosOsPontos = [];
   var userLoc = null; // { lat, lng } | null
@@ -94,6 +101,7 @@
   var elResumo = document.getElementById('listar-resumo');
   var elTabela = document.getElementById('tabela-oci');
   var elBtnMais = document.getElementById('btn-mostrar-mais');
+  var elBtnExportar = document.getElementById('btn-exportar-excel');
   var elFiltroEndereco = document.getElementById('filtro-endereco');
   var elFiltroNome = document.getElementById('filtro-nome');
   var elFiltroRegularidade = document.getElementById('filtro-regularidade');
@@ -107,6 +115,16 @@
       Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+  }
+
+  function distanciaOMEMaisProxima(p) {
+    if (!OMES.length) return null;
+    var menor = null;
+    OMES.forEach(function (ome) {
+      var d = distanciaMetros(p.lat, p.lng, ome.lat, ome.lng);
+      if (menor === null || d < menor) menor = d;
+    });
+    return menor;
   }
 
   function fmtDistancia(metros) {
@@ -177,7 +195,7 @@
     elResumo.textContent = 'Mostrando ' + visiveis.length + ' de ' + totalTxt + distTxt + '.';
 
     var thead = '<thead><tr>' +
-      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Hidrantes</th><th>AVCB</th><th>Cadastrado por</th>' +
+      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Dist. OME</th><th>Capacidade RTI</th><th>Hidrantes</th><th>Caldeira</th><th>AVCB</th><th>Cadastrado por</th>' +
       (mostrarEditar ? '<th></th><th></th>' : '') +
       '</tr></thead>';
 
@@ -186,7 +204,10 @@
         '<td class="td-nome" title="' + escapeHtml(p.nome) + '">' + escapeHtml(p.nome) + '</td>' +
         '<td class="td-endereco">' + escapeHtml(enderecoDisplay(p)) + '</td>' +
         '<td class="td-distancia">' + fmtDistancia(p._distancia) + '</td>' +
+        '<td class="td-distancia">' + fmtDistancia(distanciaOMEMaisProxima(p)) + '</td>' +
+        '<td class="td-distancia">' + fmtNumberBR(p.capacidade_litros, 0) + ' L</td>' +
         '<td>' + escapeHtml(listaHidrantes(p)) + '</td>' +
+        '<td>' + (p.possui_caldeira === 'SIM' ? 'Sim' : 'Não') + '</td>' +
         '<td>' + escapeHtml(getAvcbStatus(p).label) + '</td>' +
         '<td class="td-cadastrado" title="' + escapeHtml(p.cadastrado_por || '—') + '">' + escapeHtml(p.cadastrado_por || '—') + '</td>' +
         (mostrarEditar ? '<td><button type="button" class="btn-outline-navy btn-sm btn-editar" data-id="' + escapeHtml(p.id) + '">Editar</button></td>' : '') +
@@ -209,9 +230,8 @@
     }
 
     if (pontos.length > limiteAtual) {
-      elBtnMais.textContent = limiteAtual < LIMITE_MAXIMO
-        ? 'Mostrar mais (até ' + Math.min(LIMITE_MAXIMO, pontos.length) + ')'
-        : 'Mostrar mais';
+      var proximoLimite = Math.min(limiteAtual + INCREMENTO_MOSTRAR_MAIS, pontos.length);
+      elBtnMais.textContent = 'Mostrar mais (até ' + proximoLimite + ')';
       show(elBtnMais);
     } else {
       hide(elBtnMais);
@@ -229,6 +249,52 @@
     }).catch(function (err) {
       window.alert((err && err.message) || 'Não foi possível excluir agora.');
     });
+  }
+
+  // Exporta TODOS os pontos cadastrados (não só os filtrados/visíveis na
+  // tela) com os dados completos — diferente da tabela, que só mostra as
+  // colunas resumidas.
+  function exportarExcel() {
+    if (!window.XLSX) {
+      window.alert('Biblioteca de exportação não carregou. Verifique sua conexão e tente novamente.');
+      return;
+    }
+
+    var linhas = todosOsPontos.slice().sort(function (a, b) {
+      return a.nome.localeCompare(b.nome, 'pt-BR');
+    }).map(function (p) {
+      var avcb = getAvcbStatus(p);
+      return {
+        'Nome': p.nome,
+        'Endereço': enderecoDisplay(p),
+        'Rua': p.rua || '',
+        'Número': p.numero || '',
+        'Bairro': p.bairro || '',
+        'Cidade': p.cidade || '',
+        'Latitude': p.lat,
+        'Longitude': p.lng,
+        'Capacidade RTI (L)': p.capacidade_litros,
+        'Hidrante de fachada': p.hidrante_fachada === 'SIM' ? 'Sim' : 'Não',
+        'Hidrante de recalque': p.hidrante_recalque === 'SIM' ? 'Sim' : 'Não',
+        'Hidrante público': p.hidrante_publico === 'SIM' ? 'Sim' : 'Não',
+        'Possui caldeira': p.possui_caldeira === 'SIM' ? 'Sim' : 'Não',
+        'Possui AVCB': p.possui_avcb === 'SIM' ? 'Sim' : 'Não',
+        'Validade do AVCB': p.data_validade_avcb ? fmtDateBR(p.data_validade_avcb) : '',
+        'Situação do AVCB': avcb.label,
+        'Pavimentos': p.quantidade_pavimentos != null ? p.quantidade_pavimentos : '',
+        'Área construída (m²)': p.area_construida != null ? p.area_construida : '',
+        'Altura da edificação (m)': p.altura_edificacao != null ? p.altura_edificacao : '',
+        'Cadastrado por': p.cadastrado_por || '',
+        'Data de cadastro': p.timestamp ? new Date(p.timestamp).toLocaleString('pt-BR') : '',
+        'ID': p.id
+      };
+    });
+
+    var ws = XLSX.utils.json_to_sheet(linhas);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'OCI');
+    var dataHoje = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, 'oci-cat-sertao-' + dataHoje + '.xlsx');
   }
 
   function renderizar() {
@@ -249,7 +315,7 @@
   }
 
   elBtnMais.addEventListener('click', function () {
-    limiteAtual = LIMITE_MAXIMO;
+    limiteAtual += INCREMENTO_MOSTRAR_MAIS;
     renderizar();
   });
   [elFiltroEndereco, elFiltroNome].forEach(function (el) {
@@ -257,6 +323,7 @@
   });
   elFiltroRegularidade.addEventListener('change', function () { limiteAtual = LIMITE_INICIAL; renderizar(); });
   document.getElementById('btn-atualizar-loc').addEventListener('click', obterLocalizacao);
+  elBtnExportar.addEventListener('click', exportarExcel);
 
   function mostrarNegado(mensagem) {
     hide(elCarregando);
