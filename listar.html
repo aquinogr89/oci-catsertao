@@ -92,22 +92,22 @@
   // é aproximado (fica no trecho da via, não no prédio exato), suficiente
   // para a distância aproximada mostrada aqui.
   var OMES = [
-    { nome: 'Arcoverde — 9º GB (sede/1ª SB)', lat: -8.407645, lng: -37.111007 },
-    { nome: 'Pesqueira — 9º GB 2ª SB', lat: -8.369472, lng: -36.669558 },
+    { cidade: 'Arcoverde', nome: 'Arcoverde — 9º GB (sede/1ª SB)', lat: -8.407645, lng: -37.111007 },
+    { cidade: 'Pesqueira', nome: 'Pesqueira — 9º GB 2ª SB', lat: -8.369472, lng: -36.669558 },
     // Custódia: não aparece no site oficial do CBMPE — endereço confirmado
     // pelo usuário (antigo Terminal Rodoviário): Av. Inocêncio Lima, s/n,
     // Centro, Custódia-PE, CEP 56640-000.
-    { nome: 'Custódia — 9º GB 3ª SB', lat: -8.092649, lng: -37.632505 },
-    { nome: 'Salgueiro — 5º GB (sede/1ª SB)', lat: -8.080761, lng: -39.129753 },
-    { nome: 'São José do Belmonte — 5º GB 2ª SB', lat: -7.863402, lng: -38.765801 },
-    { nome: 'Araripina — 5º GB 3ª SB', lat: -7.586274, lng: -40.504895 },
-    { nome: 'Ouricuri — 5º GB 4ª SB', lat: -7.881320, lng: -40.082702 },
-    { nome: 'Petrolina — 4º GB (sede/1ª SB)', lat: -9.390334, lng: -40.510325 },
-    { nome: 'Santa Maria da Boa Vista — 4º GB 2ª SB', lat: -8.769837, lng: -39.763344 },
-    { nome: 'Serra Talhada — 3º GB (sede/1ª SB)', lat: -7.987167, lng: -38.311566 },
-    { nome: 'Afogados da Ingazeira — 3º GB 2ª SB', lat: -7.708544, lng: -37.605155 },
-    { nome: 'São José do Egito — 3º GB 3ª SB', lat: -7.472185, lng: -37.274272 },
-    { nome: 'Petrolândia — 3º GB 5ª SB', lat: -8.987030, lng: -38.221655 }
+    { cidade: 'Custódia', nome: 'Custódia — 9º GB 3ª SB', lat: -8.092649, lng: -37.632505 },
+    { cidade: 'Salgueiro', nome: 'Salgueiro — 5º GB (sede/1ª SB)', lat: -8.080761, lng: -39.129753 },
+    { cidade: 'São José do Belmonte', nome: 'São José do Belmonte — 5º GB 2ª SB', lat: -7.863402, lng: -38.765801 },
+    { cidade: 'Araripina', nome: 'Araripina — 5º GB 3ª SB', lat: -7.586274, lng: -40.504895 },
+    { cidade: 'Ouricuri', nome: 'Ouricuri — 5º GB 4ª SB', lat: -7.881320, lng: -40.082702 },
+    { cidade: 'Petrolina', nome: 'Petrolina — 4º GB (sede/1ª SB)', lat: -9.390334, lng: -40.510325 },
+    { cidade: 'Santa Maria da Boa Vista', nome: 'Santa Maria da Boa Vista — 4º GB 2ª SB', lat: -8.769837, lng: -39.763344 },
+    { cidade: 'Serra Talhada', nome: 'Serra Talhada — 3º GB (sede/1ª SB)', lat: -7.987167, lng: -38.311566 },
+    { cidade: 'Afogados da Ingazeira', nome: 'Afogados da Ingazeira — 3º GB 2ª SB', lat: -7.708544, lng: -37.605155 },
+    { cidade: 'São José do Egito', nome: 'São José do Egito — 3º GB 3ª SB', lat: -7.472185, lng: -37.274272 },
+    { cidade: 'Petrolândia', nome: 'Petrolândia — 3º GB 5ª SB', lat: -8.987030, lng: -38.221655 }
   ];
 
   var todosOsPontos = [];
@@ -142,7 +142,7 @@
     var melhor = null;
     OMES.forEach(function (ome) {
       var d = distanciaMetros(p.lat, p.lng, ome.lat, ome.lng);
-      if (!melhor || d < melhor.distancia) melhor = { distancia: d, nome: ome.nome };
+      if (!melhor || d < melhor.distancia) melhor = { distancia: d, nome: ome.nome, cidade: ome.cidade };
     });
     return melhor;
   }
@@ -215,7 +215,7 @@
     elResumo.textContent = 'Mostrando ' + visiveis.length + ' de ' + totalTxt + distTxt + '.';
 
     var thead = '<thead><tr>' +
-      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Dist. OME</th><th>Capacidade RTI</th><th>Hidrantes</th><th>Caldeira</th><th>AVCB</th><th>Cadastrado por</th>' +
+      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Dist. Quartel mais próx.</th><th>Quartel</th><th>Capacidade RTI</th><th>Hidrantes</th><th>Caldeira</th><th>AVCB</th><th>Cadastrado por</th>' +
       (mostrarEditar ? '<th></th><th></th>' : '') +
       '</tr></thead>';
 
@@ -226,6 +226,7 @@
         '<td class="td-endereco">' + escapeHtml(enderecoDisplay(p)) + '</td>' +
         '<td class="td-distancia">' + fmtDistancia(p._distancia) + '</td>' +
         '<td class="td-distancia" title="' + (ome ? escapeHtml(ome.nome) : '') + '">' + fmtDistancia(ome && ome.distancia) + '</td>' +
+        '<td>' + (ome ? 'Quartel ' + escapeHtml(ome.cidade) : '—') + '</td>' +
         '<td class="td-distancia">' + fmtNumberBR(p.capacidade_litros, 0) + ' L</td>' +
         '<td>' + escapeHtml(listaHidrantes(p)) + '</td>' +
         '<td>' + (p.possui_caldeira === 'SIM' ? 'Sim' : 'Não') + '</td>' +
