@@ -59,17 +59,30 @@ function gerarSalt_() {
 // força bruta offline caso os hashes algum dia vazem. Usado para toda senha
 // nova ou alterada a partir de agora.
 //
-// 3000 é uma estimativa conservadora: cada rodada é uma chamada a
-// Utilities.computeDigest, que tem um custo fixo por chamada (não é só o
-// SHA-256 em si) — não foi possível medir o tempo real de execução no Apps
-// Script antes de publicar. Se o login ficar perceptivelmente lento depois
-// do deploy, baixe esse número; se quiser mais margem e o login continuar
-// rápido, pode subir.
-var HASH_ITERACOES = 3000;
+// Reduzido de 3000 para 1500 em 29/07/2026: medimos ~2,2-2,4s de latência
+// pura do Apps Script por chamada (fora do nosso controle), e as 3000
+// rodadas somavam uma fatia perceptível em cima disso no login. 1500 ainda é
+// uma margem confortável contra força bruta offline; se ficar lento de novo,
+// pode baixar mais — se quiser mais margem e o login continuar rápido, pode
+// subir.
+var HASH_ITERACOES = 1500;
+
+// Valor usado antes da redução acima. Mantido só para handleLogin_ e
+// handleAlterarSenha_ aceitarem como fallback os hashes já gravados na
+// planilha com 3000 rodadas — sem isso, TODA conta existente ficaria
+// bloqueada no primeiro login após o deploy (o hash recalculado com 1500
+// rodadas nunca bateria com o valor salvo). Ao autenticar com sucesso por
+// esse fallback, o hash é regravado no formato novo (1500) na hora, então
+// nenhum usuário precisa trocar de senha por causa dessa mudança.
+var HASH_ITERACOES_ANTIGO = 3000;
 
 function hashSenha_(senha, salt) {
+  return hashSenhaComIteracoes_(senha, salt, HASH_ITERACOES);
+}
+
+function hashSenhaComIteracoes_(senha, salt, iteracoes) {
   var valor = salt + senha;
-  for (var i = 0; i < HASH_ITERACOES; i++) {
+  for (var i = 0; i < iteracoes; i++) {
     valor = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, valor));
   }
   return valor;
@@ -216,10 +229,14 @@ function handleLogin_(body) {
   }
 
   var senhaConfere = hashSenha_(senha, usuario.salt) === usuario.hash_senha;
-  var eraFormatoLegado = false;
+  var precisaReencodar = false;
+  if (!senhaConfere && hashSenhaComIteracoes_(senha, usuario.salt, HASH_ITERACOES_ANTIGO) === usuario.hash_senha) {
+    senhaConfere = true;
+    precisaReencodar = true;
+  }
   if (!senhaConfere && hashSenhaLegado_(senha, usuario.salt) === usuario.hash_senha) {
     senhaConfere = true;
-    eraFormatoLegado = true;
+    precisaReencodar = true;
   }
   if (!senhaConfere) {
     cache.put(chaveTentativas, String(tentativas + 1), LOGIN_BLOQUEIO_MINUTOS * 60);
@@ -227,7 +244,7 @@ function handleLogin_(body) {
     return { ok: false, error: 'Usuário ou senha incorretos.' };
   }
 
-  if (eraFormatoLegado) {
+  if (precisaReencodar) {
     usuariosSheet_().getRange(usuario._row, 2).setValue(hashSenha_(senha, usuario.salt)); // hash_senha
   }
 
@@ -381,7 +398,13 @@ function handleAlterarSenha_(body) {
 
   var usuario = buscarUsuario_(sessao.login);
   if (!usuario) return { ok: false, error: 'Usuário não encontrado.' };
-  if (hashSenha_(senhaAtual, usuario.salt) !== usuario.hash_senha) {
+  // Aceita o hash no formato atual ou no formato antigo (ver
+  // HASH_ITERACOES_ANTIGO) — cobre o caso raro de uma sessão já ativa antes
+  // do deploy da redução de rodadas, cujo hash só seria reencodado no
+  // próximo login (handleLogin_), que pode não ter acontecido ainda.
+  var senhaAtualConfere = hashSenha_(senhaAtual, usuario.salt) === usuario.hash_senha ||
+    hashSenhaComIteracoes_(senhaAtual, usuario.salt, HASH_ITERACOES_ANTIGO) === usuario.hash_senha;
+  if (!senhaAtualConfere) {
     return { ok: false, error: 'Senha atual incorreta.' };
   }
 
