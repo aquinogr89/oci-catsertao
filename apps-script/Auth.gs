@@ -457,6 +457,18 @@ function handleObterTermo_(body) {
   return { ok: true, rows: rows };
 }
 
+// Chamado por eventos.html (site catsertao) ao abrir a aba "Controle de
+// Eventos" -- não devolve dado nenhum (a planilha é consultada direto via
+// iframe do Google Sheets, fora deste backend), só confirma perfil e
+// registra o acesso no LOG. Mesmo padrão de handleObterTermo_/acesso_termo.
+function handleRegistrarAcessoEventos_(body) {
+  var sessao = exigirSessao_(body.token, ['admin_master', 'admin']);
+  if (sessao.erro) return { ok: false, error: sessao.erro };
+
+  registrarLog_(sessao.login, sessao.perfil, 'acesso_eventos', 'Consultou o Controle de Eventos');
+  return { ok: true };
+}
+
 // Edição do Termo de Compromisso: mesma permissão de handleObterTermo_
 // (admin_master/admin). Como a planilha vem das respostas de um formulário
 // externo (n8n) cujas colunas podem mudar com o tempo, a edição é genérica —
