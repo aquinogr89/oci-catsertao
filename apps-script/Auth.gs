@@ -597,11 +597,11 @@ function textoNormalizado_(s) {
   return String(s || '').normalize('NFD').replace(new RegExp('[̀-ͯ]', 'g'), '').toLowerCase();
 }
 
-// Limites de página aceitos pelo front-end (log.html) — qualquer outro valor
-// (ausente, inválido, ou um número fora dessa lista) cai no padrão de 10.
-// Limitar aqui, no servidor, é o que realmente evita sobrecarregar a página:
-// só as N linhas mais recentes (já filtradas) chegam a trafegar e a serem
-// desenhadas na tabela, mesmo que o LOG tenha milhares de registros.
+// Registros por página aceitos pelo front-end (log.html) — qualquer outro
+// valor (ausente, inválido, ou um número fora dessa lista) cai no padrão de
+// 10. Limitar aqui, no servidor, é o que realmente evita sobrecarregar a
+// página: só as N linhas da página pedida (já filtradas) chegam a trafegar e
+// a serem desenhadas na tabela, mesmo que o LOG tenha milhares de registros.
 var LOG_LIMITES_PERMITIDOS = [10, 50, 100];
 var LOG_LIMITE_PADRAO = 10;
 
@@ -618,6 +618,12 @@ function handleListarLog_(body) {
   var limite = Number(body.limite);
   if (LOG_LIMITES_PERMITIDOS.indexOf(limite) === -1) limite = LOG_LIMITE_PADRAO;
 
+  // 1-based, como no front-end. Sem paginaAtual válida (ausente, zero,
+  // negativa, fracionária) cai na primeira página -- mesmo comportamento de
+  // antes desta mudança, quando só existia "os N mais recentes".
+  var pagina = Math.floor(Number(body.pagina));
+  if (!pagina || pagina < 1) pagina = 1;
+
   var filtrado = rows.filter(function (r) {
     if (acaoFiltro && r.acao !== acaoFiltro) return false;
     var ts = new Date(r.timestamp);
@@ -633,9 +639,10 @@ function handleListarLog_(body) {
   }).reverse(); // mais recentes primeiro
 
   var total = filtrado.length;
-  var pagina = filtrado.slice(0, limite);
+  var inicio = (pagina - 1) * limite;
+  var paginaRows = filtrado.slice(inicio, inicio + limite);
 
-  return { ok: true, log: pagina, total: total, limite: limite };
+  return { ok: true, log: paginaRows, total: total, limite: limite, pagina: pagina };
 }
 
 /**
