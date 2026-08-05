@@ -134,6 +134,8 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
   border:1.5px solid var(--navy); padding:9px 14px; border-radius:9px; cursor:pointer; align-self:flex-start;
 }
 .btn-outline-navy:hover{ background:var(--navy); color:#fff; }
+.btn-outline-navy:disabled{ opacity:.6; cursor:not-allowed; }
+.btn-outline-navy:disabled:hover{ background:#fff; color:var(--navy); }
 
 .checkbox-row{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:500; text-transform:none; letter-spacing:normal; color:var(--ink); }
 .checkbox-row input{ width:18px; height:18px; accent-color:var(--red); }

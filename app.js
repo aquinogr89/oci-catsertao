@@ -309,7 +309,7 @@ function initLeafletMap() {
       marker.bindPopup(buildPopupHtml(point, session));
       marker.on('popupopen', function () {
         const btn = document.querySelector('.btn-popup-editar[data-id="' + point.id + '"]');
-        if (btn) btn.addEventListener('click', function () { abrirModalEdicao(point.id); });
+        if (btn) btn.addEventListener('click', function () { ativarCarregandoBotaoEditar(btn, point.id); });
       });
       return marker;
     }
@@ -861,14 +861,32 @@ function wireCadastroModal() {
 
 function abrirModalEdicaoPorId(id) {
   const session = getSession();
-  if (!podeEditar(session)) return;
-  listarRTIsRemoto(session.token).then(function (res) {
-    if (!res.ok) return;
+  if (!podeEditar(session)) return Promise.resolve();
+  return listarRTIsRemoto(session.token).then(function (res) {
+    if (!res.ok) throw new Error(res.error || 'Não foi possível carregar os dados agora.');
     const ponto = (res.points || []).map(normalizePoint).find(function (p) { return p.id === id; });
-    if (ponto && window.abrirModalEdicaoComPonto) window.abrirModalEdicaoComPonto(ponto);
+    if (!ponto) throw new Error('OCI não encontrado — pode ter sido removido.');
+    if (window.abrirModalEdicaoComPonto) window.abrirModalEdicaoComPonto(ponto);
   });
 }
-function abrirModalEdicao(id) { abrirModalEdicaoPorId(id); }
+function abrirModalEdicao(id) { return abrirModalEdicaoPorId(id); }
+
+// Mostra "Carregando..." no botão de edição do popup do mapa enquanto busca
+// os dados atualizados do ponto -- sem isso, o clique parecia travado, ja
+// que abrirModalEdicaoPorId busca a lista inteira de OCIs antes de abrir o
+// modal (usuario relatou "demorou a abrir o campo de editar" sem nenhum
+// sinal na tela de que algo estava acontecendo).
+function ativarCarregandoBotaoEditar(btn, id) {
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Carregando...';
+  abrirModalEdicao(id).catch(function (err) {
+    window.alert((err && err.message) || 'Não foi possível abrir a edição agora.');
+  }).finally(function () {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  });
+}
 
 // ===================== Botão "Listar OCI" (abre listar.html numa aba própria) =====================
 // A listagem com filtro/distância vive em listar.html, página separada — ela
