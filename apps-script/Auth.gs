@@ -105,36 +105,63 @@ function registrarLog_(login, perfil, acao, detalhe) {
 }
 
 // ===================== Sessões =====================
+// Trava (LockService) em volta da limpeza + gravação: sem ela, dois logins
+// quase simultâneos (dois usuários, ou duas abas) podiam se atropelar --
+// uma execução lia a planilha, decidia quais linhas manter, e gravava por
+// cima bem na hora que a outra também estava lendo/gravando, perdendo o
+// token que a outra tinha acabado de criar. Mesmo padrão de
+// handleEditarTermo_.
 function criarSessao_(login, perfil) {
   var sheet = ensureSheet_('SESSOES', ['token', 'login', 'perfil', 'criado_em', 'expira_em']);
-  limparSessoesExpiradas_(sheet);
   var token = Utilities.getUuid();
-  var agora = new Date();
-  var expira = new Date(agora.getTime() + SESSAO_HORAS * 3600 * 1000);
-  sheet.appendRow([token, login, perfil, agora.toISOString(), expira.toISOString()]);
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    limparSessoesExpiradas_(sheet);
+    var agora = new Date();
+    var expira = new Date(agora.getTime() + SESSAO_HORAS * 3600 * 1000);
+    sheet.appendRow([token, login, perfil, agora.toISOString(), expira.toISOString()]);
+  } finally {
+    lock.releaseLock();
+  }
+
   return token;
 }
 
-// Reescreve a planilha inteira de uma vez (le tudo, filtra em memoria,
-// grava so as linhas vivas) em vez de deletar linha por linha -- deletar
-// uma a uma e uma chamada de API separada por linha expirada, e como a
-// limpeza so roda oportunisticamente no login de outra pessoa, o numero de
-// linhas expiradas podia crescer bastante entre limpezas. Isso deixava o
-// login (e, por tabela, toda acao autenticada -- ver obterSessao_, que le
-// esta mesma planilha inteira a cada chamada) cada vez mais lento conforme
-// o backlog crescia, ate estourar timeout (2026-08-05).
+// Le a planilha uma vez, filtra em memoria, e regrava so as linhas vivas --
+// em vez de deletar linha por linha, que e uma chamada de API separada por
+// linha expirada; como a limpeza so roda oportunisticamente no login de
+// outra pessoa, o numero de linhas expiradas podia crescer bastante entre
+// limpezas, deixando o login (e, por tabela, toda acao autenticada -- ver
+// obterSessao_, que le esta mesma planilha inteira a cada chamada) cada vez
+// mais lento, ate estourar timeout (2026-08-05).
+//
+// IMPORTANTE: as linhas vivas sao gravadas por cima das posicoes 2..N (nunca
+// um clearContents() da planilha inteira antes) e so o excedente no final e
+// removido via deleteRows (uma chamada so, nao linha a linha). Isso evita
+// que a planilha fique momentaneamente vazia/inconsistente para uma leitura
+// concorrente de obterSessao_ (chamada por toda acao autenticada, sem
+// trava) enquanto a limpeza esta em andamento.
 function limparSessoesExpiradas_(sheet) {
   var values = sheet.getDataRange().getValues();
   var agora = new Date();
   var header = values[0];
-  var vivas = [header];
+  var vivas = [];
   for (var i = 1; i < values.length; i++) {
     var expiraEm = new Date(values[i][4]);
     if (!isNaN(expiraEm.getTime()) && expiraEm >= agora) vivas.push(values[i]);
   }
-  if (vivas.length < values.length) {
-    sheet.clearContents();
-    sheet.getRange(1, 1, vivas.length, header.length).setValues(vivas);
+
+  var linhasAntigas = values.length - 1;
+  if (vivas.length === linhasAntigas) return; // nada expirado, nada a fazer
+
+  if (vivas.length > 0) {
+    sheet.getRange(2, 1, vivas.length, header.length).setValues(vivas);
+  }
+  var linhasSobrando = linhasAntigas - vivas.length;
+  if (linhasSobrando > 0) {
+    sheet.deleteRows(vivas.length + 2, linhasSobrando);
   }
 }
 
