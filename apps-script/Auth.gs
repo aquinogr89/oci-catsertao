@@ -115,14 +115,26 @@ function criarSessao_(login, perfil) {
   return token;
 }
 
+// Reescreve a planilha inteira de uma vez (le tudo, filtra em memoria,
+// grava so as linhas vivas) em vez de deletar linha por linha -- deletar
+// uma a uma e uma chamada de API separada por linha expirada, e como a
+// limpeza so roda oportunisticamente no login de outra pessoa, o numero de
+// linhas expiradas podia crescer bastante entre limpezas. Isso deixava o
+// login (e, por tabela, toda acao autenticada -- ver obterSessao_, que le
+// esta mesma planilha inteira a cada chamada) cada vez mais lento conforme
+// o backlog crescia, ate estourar timeout (2026-08-05).
 function limparSessoesExpiradas_(sheet) {
   var values = sheet.getDataRange().getValues();
   var agora = new Date();
-  for (var i = values.length - 1; i >= 1; i--) {
+  var header = values[0];
+  var vivas = [header];
+  for (var i = 1; i < values.length; i++) {
     var expiraEm = new Date(values[i][4]);
-    if (isNaN(expiraEm.getTime()) || expiraEm < agora) {
-      sheet.deleteRow(i + 1);
-    }
+    if (!isNaN(expiraEm.getTime()) && expiraEm >= agora) vivas.push(values[i]);
+  }
+  if (vivas.length < values.length) {
+    sheet.clearContents();
+    sheet.getRange(1, 1, vivas.length, header.length).setValues(vivas);
   }
 }
 
