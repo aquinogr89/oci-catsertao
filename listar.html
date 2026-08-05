@@ -154,11 +154,16 @@
     return R * c;
   }
 
-  function omeMaisProxima(p) {
-    if (!OMES.length) return null;
+  // Recebe a localização de origem (não o OCI da linha): o chefe da
+  // guarnição em deslocamento precisa comparar, a partir de onde ele está
+  // agora, se o ponto de água mais rápido é o OCI da linha ou o quartel
+  // mais próximo — por isso a distância do quartel também é medida a
+  // partir do GPS do dispositivo, e não do OCI.
+  function omeMaisProxima(origem) {
+    if (!origem || !OMES.length) return null;
     var melhor = null;
     OMES.forEach(function (ome) {
-      var d = distanciaMetros(p.lat, p.lng, ome.lat, ome.lng);
+      var d = distanciaMetros(origem.lat, origem.lng, ome.lat, ome.lng);
       if (!melhor || d < melhor.distancia) melhor = { distancia: d, nome: ome.nome, cidade: ome.cidade };
     });
     return melhor;
@@ -226,6 +231,7 @@
 
     var mostrarEditar = podeEditar(session);
     var visiveis = pontos.slice(0, limiteAtual);
+    var omeProxima = omeMaisProxima(userLoc);
 
     var totalTxt = pontos.length === 1 ? '1 OCI encontrado' : pontos.length + ' OCI encontrados';
     var distTxt = userLoc ? ', ordenados do mais próximo ao mais distante da sua localização' : ', ordenados por nome (localização indisponível)';
@@ -237,7 +243,7 @@
       '</tr></thead>';
 
     var tbody = '<tbody>' + visiveis.map(function (p) {
-      var ome = omeMaisProxima(p);
+      var ome = omeProxima;
       return '<tr>' +
         '<td class="td-nome" title="' + escapeHtml(p.nome) + '">' + escapeHtml(p.nome) + '</td>' +
         '<td class="td-endereco">' + escapeHtml(enderecoDisplay(p)) + '</td>' +
