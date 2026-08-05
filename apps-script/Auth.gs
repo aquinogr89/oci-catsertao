@@ -508,6 +508,72 @@ function handleRegistrarAcessoEventos_(body) {
   return { ok: true };
 }
 
+// Conteúdo do card MPPE/TAC da aba Controle de Eventos, editável ao vivo
+// (sem deploy) por quem tem acesso à aba -- guardado como um único blob
+// JSON numa aba dedicada da planilha, no mesmo padrão de ensureSheet_ já
+// usado por SESSOES/LOG/RTI. Antes desse recurso, o texto vinha só de um
+// arquivo estático (content/tac-mppe.json no repositório catsertao), que
+// continua existindo como conteúdo padrão/semente e fallback -- ver
+// comentário desse arquivo.
+function eventosTacSheet_() {
+  return ensureSheet_('EVENTOS_TAC', ['conteudo_json', 'atualizado_em', 'atualizado_por']);
+}
+
+function handleObterConteudoEventos_(body) {
+  var sessao = exigirSessao_(body.token, ['admin_master', 'admin']);
+  if (sessao.erro) return { ok: false, error: sessao.erro };
+
+  var sheet = eventosTacSheet_();
+  if (sheet.getLastRow() < 2) {
+    return { ok: true, conteudo: null, atualizadoEm: '', atualizadoPor: '' };
+  }
+  var row = sheet.getRange(2, 1, 1, 3).getValues()[0];
+  var conteudo = null;
+  try { conteudo = JSON.parse(row[0]); } catch (e) { conteudo = null; }
+  return { ok: true, conteudo: conteudo, atualizadoEm: row[1] || '', atualizadoPor: row[2] || '' };
+}
+
+// Validação simples de forma: cada seção precisa de um título e uma lista de
+// parágrafos não vazios -- protege contra um payload malformado gravar lixo
+// na planilha (a página em si já limita quem chega até aqui a admin_master/
+// admin, então a validação é de forma, não de permissão).
+function validarConteudoEventos_(conteudo) {
+  if (!conteudo || !Array.isArray(conteudo.secoes) || conteudo.secoes.length === 0) {
+    return 'Conteúdo inválido: informe ao menos uma seção.';
+  }
+  for (var i = 0; i < conteudo.secoes.length; i++) {
+    var secao = conteudo.secoes[i];
+    if (!secao || typeof secao.titulo !== 'string' || !secao.titulo.trim()) {
+      return 'Seção ' + (i + 1) + ': informe um título.';
+    }
+    if (!Array.isArray(secao.paragrafos) || secao.paragrafos.length === 0) {
+      return 'Seção "' + secao.titulo + '": informe ao menos um parágrafo.';
+    }
+    for (var j = 0; j < secao.paragrafos.length; j++) {
+      if (typeof secao.paragrafos[j] !== 'string' || !secao.paragrafos[j].trim()) {
+        return 'Seção "' + secao.titulo + '": parágrafos vazios não são permitidos.';
+      }
+    }
+  }
+  return null;
+}
+
+function handleSalvarConteudoEventos_(body) {
+  var sessao = exigirSessao_(body.token, ['admin_master', 'admin']);
+  if (sessao.erro) return { ok: false, error: sessao.erro };
+
+  var erro = validarConteudoEventos_(body.conteudo);
+  if (erro) return { ok: false, error: erro };
+
+  var agora = new Date().toISOString();
+  var sheet = eventosTacSheet_();
+  if (sheet.getLastRow() < 2) sheet.appendRow(['', '', '']);
+  sheet.getRange(2, 1, 1, 3).setValues([[JSON.stringify(body.conteudo), agora, sessao.login]]);
+
+  registrarLog_(sessao.login, sessao.perfil, 'edicao_conteudo_eventos', 'Editou o texto do MPPE/TAC em Controle de Eventos');
+  return { ok: true, atualizadoEm: agora };
+}
+
 // Edição do Termo de Compromisso: mesma permissão de handleObterTermo_
 // (admin_master/admin). Como a planilha vem das respostas de um formulário
 // externo (n8n) cujas colunas podem mudar com o tempo, a edição é genérica —

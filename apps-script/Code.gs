@@ -132,6 +132,8 @@ function doPost(e) {
     case 'editarTermo': return jsonResponse_(handleEditarTermo_(body));
     case 'concluirTermo': return jsonResponse_(handleConcluirTermo_(body));
     case 'registrarAcessoEventos': return jsonResponse_(handleRegistrarAcessoEventos_(body));
+    case 'obterConteudoEventos': return jsonResponse_(handleObterConteudoEventos_(body));
+    case 'salvarConteudoEventos': return jsonResponse_(handleSalvarConteudoEventos_(body));
     case 'listarLog': return jsonResponse_(handleListarLog_(body));
     case 'cadastrarRTI': return jsonResponse_(handleCadastrarRTI_(body));
     case 'listarRTIs': return jsonResponse_(handleListarRTIs_(body));
