@@ -157,8 +157,8 @@ function validarDadosRTI_(body) {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return { erro: 'Coordenadas inválidas.' };
   }
-  if (capacidade <= 0) {
-    return { erro: 'Informe a capacidade da RTI em litros.' };
+  if (capacidade < 0) {
+    return { erro: 'A capacidade da RTI não pode ser negativa.' };
   }
 
   // Endereço estruturado, obrigatório desde esta versão (tanto para cadastro
