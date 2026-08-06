@@ -2,7 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<!-- maximum-scale=1 removido (N4 da auditoria): bloqueava o zoom por pinça
+     na TELA INTEIRA (formulário de cadastro, listagem), não só no mapa --
+     falha de WCAG 1.4.4 pra quem tem baixa visão. O zoom por pinça do
+     Leaflet no mapa é independente (touchZoom próprio, via JS, dentro do
+     próprio elemento do mapa) e continua funcionando sem essa trava. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mapa de Ocupações de Combate a Incêndio — CAT Sertão</title>
 <meta name="description" content="Mapa de Ocupações de Combate a Incêndio (OCI) — reserva técnica de incêndio (RTI), hidrantes, AVCB e caldeira — CAT Sertão, Corpo de Bombeiros Militar de Pernambuco.">
 <meta name="theme-color" content="#14204A">
