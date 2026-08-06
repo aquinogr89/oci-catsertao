@@ -11,7 +11,14 @@
 html, body{ height:100%; }
 body{
   font-family:'Public Sans', sans-serif; color:var(--ink); background:#FBFAF8;
-  min-height:100vh; display:flex; flex-direction:column; overflow-x:hidden;
+  min-height:100vh;
+  /* iOS Safari: 100vh ignora a barra inferior do navegador, que fica por
+     cima do fim do mapa (botões ← e 📍) e do rodapé -- só apareciam
+     depois de rolar a página, quando a barra recolhia (N1 da auditoria).
+     dvh acompanha a barra recolhendo/expandindo. Duas declarações, nessa
+     ordem: navegador sem suporte a dvh usa a de cima e ignora esta. */
+  min-height:100dvh;
+  display:flex; flex-direction:column; overflow-x:hidden;
 }
 h1,h2,h3{ font-family:'Oswald', sans-serif; }
 img{ display:block; max-width:100%; }
