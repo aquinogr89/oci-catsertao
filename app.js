@@ -763,8 +763,8 @@ function wireCadastroModal() {
       show(formError);
       return;
     }
-    if (!capacidade || Number(capacidade) <= 0) {
-      formError.textContent = 'Informe a capacidade da RTI em litros.';
+    if (!capacidade || Number(capacidade) < 0) {
+      formError.textContent = 'Informe a capacidade da RTI em litros (0 é aceito, para imóveis sem reserva).';
       show(formError);
       return;
     }
