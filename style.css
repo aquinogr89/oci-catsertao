@@ -61,9 +61,17 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
   width:calc(100% - 24px); justify-content:center; flex-wrap:wrap;
 }
 @media (min-width: 641px){
+  /* transform:translateY(-50%) removido (O1 da auditoria): um ancestral com
+     transform vira bloco de contenção de descendentes position:fixed -- era
+     por isso que o .btn-back-main (fixed) se posicionava pela .fab-row e caía
+     em cima do "Cadastrar OCI". A centralização vertical passa a vir de
+     top:0/bottom:0 + justify-content:center, sem transform. A linha é
+     pointer-events:none (os botões reativam), então ocupar a altura toda do
+     mapa não bloqueia clique no mapa. */
   .fab-row{
-    top:50%; left:auto; right:20px; bottom:auto; transform:translateY(-50%);
-    flex-direction:column; align-items:flex-end; width:auto; flex-wrap:nowrap; justify-content:center;
+    top:0; bottom:0; left:auto; right:20px; transform:none;
+    flex-direction:column; align-items:flex-end; justify-content:center;
+    width:auto; flex-wrap:nowrap;
   }
 }
 .btn-fab{
@@ -100,11 +108,11 @@ main.map-area{ position:relative; flex:1 1 auto; min-height:0; width:100%; }
   pointer-events:auto; /* a .fab-row é pointer-events:none */
 }
 @media (min-width: 641px){
-  /* fixed, não absolute: .fab-row também é position:absolute no desktop
-     (ver acima), então um .btn-back-main absolute dentro dela passaria a
-     se posicionar em relação À .fab-row, não à tela -- fixed ignora
-     ancestrais posicionados e sempre relativo à viewport. */
-  .btn-back-main{ position:fixed; left:12px; bottom:18px; z-index:1001; }
+  /* fixed pela viewport. ATENÇÃO: só funciona porque a .fab-row deixou de ter
+     transform (ver O1 acima) -- ancestral com transform é bloco de contenção de
+     fixed. bottom:64px, não 18px: o rodapé navy ocupa os ~46px de baixo da
+     viewport e o botão ficava por cima dele. */
+  .btn-back-main{ position:fixed; left:12px; bottom:64px; z-index:1001; }
 }
 .btn-back-main:hover{ border-color:var(--red); color:var(--red); }
 
