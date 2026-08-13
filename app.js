@@ -482,6 +482,14 @@ function startApp() {
 // listar.html manda o admin/admin_master de volta para cá com "?editar=<id>"
 // ao clicar em "Editar" na listagem — abre direto o modal de edição desse
 // OCI (mesmo fluxo de abrirModalEdicaoPorId, já usado pelo popup do marcador).
+//
+// abrirModalEdicaoPorId retorna uma Promise que pode rejeitar (sessão sem
+// permissão, ponto não encontrado, erro de rede) -- antes, essa rejeição não
+// era tratada aqui (ao contrário do botão do popup, que já tinha .catch com
+// alert), então qualquer falha ficava muda: a página só terminava de carregar
+// normalmente (com o zoom de localização de sempre, sem relação com isso) e
+// o usuário via "abriu o mapa" sem nenhum indício de que o pedido de edição
+// tinha falhado (achado 13/08/2026, relato do usuário).
 function abrirEdicaoViaQueryParam() {
   const id = new URLSearchParams(window.location.search).get('editar');
   if (!id) return;
@@ -492,8 +500,13 @@ function abrirEdicaoViaQueryParam() {
       abrirPopupLogin(tentar);
       return;
     }
-    if (!podeEditar(session)) return;
-    abrirModalEdicaoPorId(id);
+    if (!podeEditar(session)) {
+      window.alert('Sua conta não tem permissão para editar OCI.');
+      return;
+    }
+    abrirModalEdicaoPorId(id).catch(function (err) {
+      window.alert((err && err.message) || 'Não foi possível abrir a edição deste OCI agora.');
+    });
   }
   tentar();
 }
