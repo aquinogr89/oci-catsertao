@@ -205,7 +205,7 @@ function enderecoDisplay(point) {
 function buildPopupHtml(point, session) {
   const fachadaYes = point.hidrante_fachada === 'SIM';
   const recalqueYes = point.hidrante_recalque === 'SIM';
-  const publicoYes = point.hidrante_publico === 'SIM';
+  const sprinklerYes = point.possui_sprinkler === 'SIM';
   const caldeiraYes = point.possui_caldeira === 'SIM';
   const avcb = getAvcbStatus(point);
 
@@ -234,7 +234,7 @@ function buildPopupHtml(point, session) {
       '<div class="chips">' +
         '<span class="chip' + (fachadaYes ? ' yes' : '') + '">Hidrante de fachada: ' + (fachadaYes ? 'SIM' : 'NÃO') + '</span>' +
         '<span class="chip' + (recalqueYes ? ' yes' : '') + '">Hidrante de recalque: ' + (recalqueYes ? 'SIM' : 'NÃO') + '</span>' +
-        '<span class="chip' + (publicoYes ? ' yes' : '') + '">Hidrante público: ' + (publicoYes ? 'SIM' : 'NÃO') + '</span>' +
+        '<span class="chip' + (sprinklerYes ? ' yes' : '') + '">Sprinklers: ' + (sprinklerYes ? 'SIM' : 'NÃO') + '</span>' +
         '<span class="chip' + (caldeiraYes ? ' yes' : '') + '">Caldeira: ' + (caldeiraYes ? 'SIM' : 'NÃO') + '</span>' +
         '<span class="chip' + (avcb.valido ? ' yes' : '') + '">AVCB: ' + escapeHtml(avcb.label) + '</span>' +
       '</div>' +
@@ -252,7 +252,11 @@ function normalizePoint(raw) {
     capacidade_litros: raw.capacidade_litros || 0,
     hidrante_fachada: raw.hidrante_fachada === 'SIM' ? 'SIM' : 'NAO',
     hidrante_recalque: raw.hidrante_recalque === 'SIM' ? 'SIM' : 'NAO',
-    hidrante_publico: raw.hidrante_publico === 'SIM' ? 'SIM' : 'NAO',
+    // Pontos cadastrados antes desse campo existir vêm sem "possui_sprinkler"
+    // (raw.possui_sprinkler === undefined): tratados como "NAO" até edição
+    // manual, já que não há como inferir esse dado do cadastro antigo
+    // (substituiu hidrante_publico, sistema diferente).
+    possui_sprinkler: raw.possui_sprinkler === 'SIM' ? 'SIM' : 'NAO',
     endereco: raw.endereco || '',
     rua: raw.rua || '',
     numero: raw.numero || '',
@@ -651,7 +655,7 @@ function wireCadastroModal() {
     document.getElementById('input-capacidade').value = point.capacidade_litros || '';
     document.getElementById('check-fachada').checked = point.hidrante_fachada === 'SIM';
     document.getElementById('check-recalque').checked = point.hidrante_recalque === 'SIM';
-    document.getElementById('check-publico').checked = point.hidrante_publico === 'SIM';
+    document.getElementById('check-sprinkler').checked = point.possui_sprinkler === 'SIM';
     document.getElementById('check-caldeira').checked = point.possui_caldeira === 'SIM';
     checkAvcb.checked = point.possui_avcb === 'SIM';
     toggleCampoDataAvcb();
@@ -730,7 +734,7 @@ function wireCadastroModal() {
       document.getElementById('input-altura').value ||
       document.getElementById('check-fachada').checked ||
       document.getElementById('check-recalque').checked ||
-      document.getElementById('check-publico').checked ||
+      document.getElementById('check-sprinkler').checked ||
       document.getElementById('check-caldeira').checked ||
       checkAvcb.checked
     );
@@ -827,7 +831,7 @@ function wireCadastroModal() {
       capacidade_litros: Number(capacidade),
       hidrante_fachada: document.getElementById('check-fachada').checked ? 'SIM' : 'NAO',
       hidrante_recalque: document.getElementById('check-recalque').checked ? 'SIM' : 'NAO',
-      hidrante_publico: document.getElementById('check-publico').checked ? 'SIM' : 'NAO',
+      possui_sprinkler: document.getElementById('check-sprinkler').checked ? 'SIM' : 'NAO',
       possui_caldeira: document.getElementById('check-caldeira').checked ? 'SIM' : 'NAO',
       rua: rua,
       numero: numero,

@@ -178,7 +178,6 @@
     var itens = [];
     if (p.hidrante_fachada === 'SIM') itens.push('Fachada');
     if (p.hidrante_recalque === 'SIM') itens.push('Recalque');
-    if (p.hidrante_publico === 'SIM') itens.push('Público');
     return itens.length ? itens.join(', ') : '—';
   }
 
@@ -238,7 +237,7 @@
     elResumo.textContent = 'Mostrando ' + visiveis.length + ' de ' + totalTxt + distTxt + '.';
 
     var thead = '<thead><tr>' +
-      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Dist. Quartel mais próx.</th><th>Quartel</th><th>Capacidade RTI</th><th>Hidrantes</th><th>Caldeira</th><th>AVCB</th><th>Cadastrado por</th>' +
+      '<th>Nome</th><th>Endereço</th><th>Distância</th><th>Dist. Quartel mais próx.</th><th>Quartel</th><th>Capacidade RTI</th><th>Hidrantes</th><th>Sprinklers</th><th>Caldeira</th><th>AVCB</th><th>Cadastrado por</th>' +
       (mostrarEditar ? '<th></th><th></th>' : '') +
       '</tr></thead>';
 
@@ -252,6 +251,7 @@
         '<td>' + (ome ? 'Quartel ' + escapeHtml(ome.cidade) : '—') + '</td>' +
         '<td class="td-distancia">' + fmtNumberBR(p.capacidade_litros, 0) + ' L</td>' +
         '<td>' + escapeHtml(listaHidrantes(p)) + '</td>' +
+        '<td>' + (p.possui_sprinkler === 'SIM' ? 'Sim' : 'Não') + '</td>' +
         '<td>' + (p.possui_caldeira === 'SIM' ? 'Sim' : 'Não') + '</td>' +
         '<td>' + escapeHtml(getAvcbStatus(p).label) + '</td>' +
         '<td class="td-cadastrado" title="' + escapeHtml(p.cadastrado_por || '—') + '">' + escapeHtml(p.cadastrado_por || '—') + '</td>' +
@@ -321,7 +321,7 @@
         'Capacidade RTI (L)': p.capacidade_litros,
         'Hidrante de fachada': p.hidrante_fachada === 'SIM' ? 'Sim' : 'Não',
         'Hidrante de recalque': p.hidrante_recalque === 'SIM' ? 'Sim' : 'Não',
-        'Hidrante público': p.hidrante_publico === 'SIM' ? 'Sim' : 'Não',
+        'Possui sprinklers': p.possui_sprinkler === 'SIM' ? 'Sim' : 'Não',
         'Possui caldeira': p.possui_caldeira === 'SIM' ? 'Sim' : 'Não',
         'Possui AVCB': p.possui_avcb === 'SIM' ? 'Sim' : 'Não',
         'Validade do AVCB': p.data_validade_avcb ? fmtDateBR(p.data_validade_avcb) : '',

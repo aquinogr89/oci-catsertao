@@ -21,9 +21,15 @@ var RTI_HEADERS = [
   // Campo Caldeira: mesmo padrão dos anteriores, adicionado no final para
   // não reordenar planilhas já em produção.
   'possui_caldeira',
-  // Hidrante público: mesmo padrão dos outros hidrantes (fachada/recalque),
-  // adicionado no final por causa da mesma migração automática de colunas.
-  'hidrante_publico'
+  // Hidrante público: descontinuado (ver possui_sprinkler), mas a coluna é
+  // mantida no final para não apagar dados já cadastrados nem reordenar a
+  // planilha em produção.
+  'hidrante_publico',
+  // Sprinklers: substitui o hidrante público no formulário/popup a partir
+  // desta versão. Mesmo padrão de migração automática das colunas
+  // anteriores — pontos já cadastrados ficam sem valor (tratado como "NAO"
+  // no front-end) até serem editados manualmente.
+  'possui_sprinkler'
 ];
 
 // Quem pode cadastrar RTI. Ver a listagem (handleListarRTIs_) é mais aberto —
@@ -201,7 +207,7 @@ function validarDadosRTI_(body) {
     lat: lat, lng: lng, nome: nome, capacidade: capacidade,
     hidranteFachada: body.hidrante_fachada === 'SIM' ? 'SIM' : 'NAO',
     hidranteRecalque: body.hidrante_recalque === 'SIM' ? 'SIM' : 'NAO',
-    hidrantePublico: body.hidrante_publico === 'SIM' ? 'SIM' : 'NAO',
+    possuiSprinkler: body.possui_sprinkler === 'SIM' ? 'SIM' : 'NAO',
     possuiCaldeira: body.possui_caldeira === 'SIM' ? 'SIM' : 'NAO',
     rua: rua, numero: numero, bairro: bairro, cidade: cidade,
     endereco: rua + ', ' + numero + ' - ' + bairro + ', ' + cidade,
@@ -238,7 +244,7 @@ function handleCadastrarRTI_(body) {
       case 'capacidade_litros': return d.capacidade;
       case 'hidrante_fachada': return d.hidranteFachada;
       case 'hidrante_recalque': return d.hidranteRecalque;
-      case 'hidrante_publico': return d.hidrantePublico;
+      case 'possui_sprinkler': return d.possuiSprinkler;
       case 'endereco': return d.endereco;
       case 'possui_avcb': return d.possuiAvcb;
       case 'data_validade_avcb': return d.dataValidadeAvcb;
@@ -332,7 +338,7 @@ function handleEditarRTI_(body) {
       case 'capacidade_litros': return d.capacidade;
       case 'hidrante_fachada': return d.hidranteFachada;
       case 'hidrante_recalque': return d.hidranteRecalque;
-      case 'hidrante_publico': return d.hidrantePublico;
+      case 'possui_sprinkler': return d.possuiSprinkler;
       case 'endereco': return d.endereco;
       case 'rua': return d.rua;
       case 'numero': return d.numero;

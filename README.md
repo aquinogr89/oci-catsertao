@@ -3,7 +3,7 @@
 Site estático para cadastro e visualização em mapa de pontos de Ocupações de
 Combate a Incêndio (OCI) do CAT Sertão — Centro de Atividades Técnicas do
 Sertão (CBMPE): reserva técnica de incêndio (RTI, capacidade de água),
-hidrantes (fachada, recalque e público), AVCB e caldeira.
+hidrantes (fachada e recalque), sprinklers, AVCB e caldeira.
 
 Site independente, sem nenhum link de/para o site principal do CAT Sertão — mas
 compartilha o **mesmo backend** (Google Apps Script) e o **mesmo login** do site
@@ -99,9 +99,14 @@ usuário, não é a barreira de segurança real.
 
 ## Campos do cadastro e cor do marcador
 
-Além de nome, capacidade e hidrantes (fachada, recalque e **público** — este
-último adicionado no mesmo padrão dos outros dois), o formulário de cadastro tem:
+Além de nome, capacidade e hidrantes (fachada e recalque), o formulário de
+cadastro tem:
 
+- **Possui sprinklers** (checkbox). Substitui o antigo "Hidrante público"
+  (`hidrante_publico`, coluna mantida na planilha por compatibilidade, mas
+  não usada mais). Pontos cadastrados antes dessa mudança não têm como
+  informar esse dado automaticamente — aparecem como "não possui" até
+  serem editados manualmente.
 - **Possui caldeira** (checkbox), logo antes do bloco de AVCB.
 - **Possui AVCB válido** (checkbox) — ao marcar, exibe o campo **Data de
   validade do AVCB** (obrigatório enquanto o checkbox estiver marcado).
